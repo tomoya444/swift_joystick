@@ -1,11 +1,12 @@
 //
-//  StudyViewController.swift
+//  StudyViewController2.swift
 //  UXSDKSwiftSample
 //
-//  Created by Tomoya Usui on 2023/07/05.
+//  Created by Tomoya Usui on 2023/11/15.
 //  Copyright © 2023 DJI. All rights reserved.
 //
 
+/*
 import UIKit
 import DJISDK
 import CoreBluetooth
@@ -14,19 +15,9 @@ import CDJoystick
 import DJIUXSDK
 
 
-enum FLIGHT_MODE {
-    case ROLL_LEFT_RIGHT
-    case PITCH_FORWARD_BACK
-    case THROTTLE_UP_DOWN
-    case HORIZONTAL_ORBIT
-    case VERTICAL_ORBIT
-    case VERTICAL_SINE_WAVE
-    case HORIZONTAL_SINE_WAVE
-    case YAW
-    case ORIGINAL_CIRCLE
-}
 
-class StudyViewController: UIViewController,BluetoothManagerDelegate,DJISDKManagerDelegate,CLLocationManagerDelegate{
+
+class StudyViewController2: UIViewController,BluetoothManagerDelegate,DJISDKManagerDelegate,CLLocationManagerDelegate{
     
     
     func didUpdateDatabaseDownloadProgress(_ progress: Progress) {
@@ -62,7 +53,6 @@ class StudyViewController: UIViewController,BluetoothManagerDelegate,DJISDKManag
     @IBOutlet weak var yawLabel: UILabel!
     
     //半径と高さに関するラベル
-    
     
     var timer: Timer?
     
@@ -221,7 +211,7 @@ class StudyViewController: UIViewController,BluetoothManagerDelegate,DJISDKManag
         // Setup joysticks
         // Throttle/yaw
         leftJoystick.trackingHandler = { joystickData in
-            self.yaw = Float(joystickData.velocity.x) * self.yawSpeed * 0.1
+            self.yaw = Float(joystickData.velocity.x) * self.yawSpeed
             /*
              let deadzone = 0.1
              if abs(joystickData.velocity.x) > deadzone {
@@ -237,7 +227,7 @@ class StudyViewController: UIViewController,BluetoothManagerDelegate,DJISDKManag
              self.yaw = Float(joystickData.velocity.x) * self.yawSpeed
              */
             print("yaw value\(self.yaw)")
-            self.throttle = Float(joystickData.velocity.y) * 1.0 * -1.0 * 0.3 // inverting joystick for throttle
+            self.throttle = Float(joystickData.velocity.y) * 5.0 * -1.0 * 0.5 // inverting joystick for throttle
             print("throttle value\(self.throttle)")
             //self.sendControlData(x: 0, y: 0, z: 0, ya: self.yaw)
             self.sendControlData(x: 0, y: 0, z: 0, ya: 0)
@@ -245,12 +235,11 @@ class StudyViewController: UIViewController,BluetoothManagerDelegate,DJISDKManag
         }
         
         // Pitch/roll
-        //実験では0.3のバイアスをかける
         rightJoystick.trackingHandler = { joystickData in
             //self.mutableJoystickData_x = Float(joystickData.velocity.x)
-            self.pitch = Float(joystickData.velocity.y) * 1.0 * 0.3 * 0.5
+            self.pitch = Float(joystickData.velocity.y) * 1.0 * 0.5
             //self.roll = self.mutableJoystickData_x * 1.0 * 0.5 * (-1.0)
-            self.roll = Float(joystickData.velocity.x) * 1.0 * 0.3 * (-1.0) * 0.5
+            self.roll = Float(joystickData.velocity.x) * 1.0 * 0.5 * (-1.0)
             print("pitch value\(self.pitch)")
             print("roll value\(self.roll)")
             //print(" mappedvalue3" , self.mappedValue3)
@@ -679,7 +668,7 @@ class StudyViewController: UIViewController,BluetoothManagerDelegate,DJISDKManag
             if mappedValue4 > 50{
                 //これもできてる
                 //プレゼン用
-                moveInCircle_right(sensorValue: Float(speed4)) // 0.0 ~ 1.0の間
+                moveInCircle_right(sensorValue: Float(speed4))
                 
                 //下２行無視
                 //self.roll = speed4 * 1.0 * 0.3 * (-1.0)
@@ -781,7 +770,8 @@ class StudyViewController: UIViewController,BluetoothManagerDelegate,DJISDKManag
     
     @IBAction func takeoffButtonTapped(_ sender: UIButton) {
         flightController?.startTakeoff(completion: nil)
-        currentDistance = 2.0
+        var currentHeight = 1.2
+        var currentDistance = 3.0
     }
     @IBAction func landButtonTapped(_ sender: UIButton) {
         flightController?.startLanding(completion: nil)
@@ -794,9 +784,9 @@ class StudyViewController: UIViewController,BluetoothManagerDelegate,DJISDKManag
         let distance = h / tan(angleInRadians)
         return distance
     }
-    //初期位置　高さ1.2m 半径2.0m
+    //初期位置　高さ1.2m 半径3.0m
     var currentHeight: Float = 1.2
-    var currentDistance: Float = 2.0
+    var currentDistance: Float = 3.0
 
     /*
     //@IBOutlet weak var videoPreviewView: UIView!
@@ -897,7 +887,7 @@ class StudyViewController: UIViewController,BluetoothManagerDelegate,DJISDKManag
         let newHeight = currentHeight + sensorValue
         let newDistance = computeDistanceForHeight(h: newHeight)
         
-        let distanceToMoveBackward = newDistance + currentDistance
+        let distanceToMoveBackward = newDistance - currentDistance
         // distanceToMoveBackward分だけドローンを後退させる
         //sendControlData(x: 0, y: -distanceToMoveBackward, z: sensorValue, ya: 0)
         //比較実験用
@@ -910,16 +900,12 @@ class StudyViewController: UIViewController,BluetoothManagerDelegate,DJISDKManag
         currentHeight = newHeight
         currentDistance = newDistance
         */
-        let addDistance = sensorValue  * 0.02//ここ変える
-        currentDistance = currentDistance + addDistance
-        print("currentDistance: \(self.currentDistance)")
-        self.roll = 0.0
-        self.yaw = 0.0
-        self.throttle = sensorValue  * 0.3 * 0.08
-        self.pitch = -1.0 * sensorValue * 0.5 *  0.3
+        
+        self.roll = 0
+        self.throttle = sensorValue * 0.5 * 0.5
+        self.pitch = -sensorValue * 0.5
         self.currentdis.text = "半径: \(self.currentDistance)"
-        //self.currentdis.text = "高さ: \(self.currentHeight)"
-        sendControlData(x: 0, y: 0, z: 0, ya: 0)
+        self.currentdis.text = "高さ: \(self.currentHeight)"
     }
     //高さを下げつつ前進させる関数
     func decreaseHeight(sensorValue: Float) {
@@ -936,47 +922,32 @@ class StudyViewController: UIViewController,BluetoothManagerDelegate,DJISDKManag
         print("pitch value\(self.pitch)")
         print("roll value\(self.roll)")
         sendControlData(x: 0, y: 0, z: 0, ya: 0)
-        */
+         */
         
-        //currentHeight = newHeight
-        //currentDistance = newDistance
-        
-        let addDistance = sensorValue * 0.02//ここ変える
-        currentDistance = currentDistance - addDistance
-        if currentDistance < 0.0 {
-            currentDistance = 0.0
-        }
-        print("current distance: \(self.currentDistance)")
-        
-        
-        self.roll = 0.0
-        self.yaw = 0.0
-        self.throttle = -1.0 * sensorValue  * 0.3 * 0.08
-        self.pitch = sensorValue *  0.5 * 0.3
-        self.currentdis.text = "半径: \(self.currentDistance )"
-        //self.currentdis.text = "高さ: \(self.currentHeight)"
-        sendControlData(x: 0, y: 0, z: 0, ya: 0)
+        currentHeight = newHeight
+        currentDistance = newDistance
+        self.roll = 0
+        self.throttle = -sensorValue * 0.5 * 0.5
+        self.pitch = sensorValue * 0.5
+        self.currentdis.text = "半径: \(self.currentDistance)"
+        self.currentdis.text = "高さ: \(self.currentHeight)"
     }
-    
-    
-    
     //円周上に右移動させるコマンド
     func moveInCircle_right(sensorValue: Float) {
         print("right circle command")
         let desiredSpeed = sensorValue
         
-        let timeToCompleteCircle = 2.0 * Float.pi * (4.0 / 2.0) / desiredSpeed
+        let timeToCompleteCircle = 2 * Float.pi * currentDistance / desiredSpeed
         //let timeToCompleteCircle = 2 * Float.pi * 3 / desiredSpeed
-        let yawSpeed = 360 / timeToCompleteCircle
+        let yawSpeed = 360 * 0.5 / timeToCompleteCircle
         
         // rollValueはドローンの実際の速度に影響するので、これはドローンの具体的な性能に応じて調整する必要があります。
         // ここでは、desiredSpeedの10%としていますが、これは仮定されています。
-        let rollValue: Float = desiredSpeed * currentDistance / 2.0
+        let rollValue: Float = desiredSpeed / 10.0
         self.pitch = 0.0
-        self.roll = -rollValue * 0.5 * 0.3
-        self.throttle = 0.0
-        self.yaw = yawSpeed * 0.5 * 0.30 //ここ
-        sendControlData(x: 0, y: 0, z: 0, ya: 0)//要確認
+        self.roll = -rollValue
+        self.yaw = yawSpeed * 0.5 * 0.7
+        
         print("pitch value\(self.pitch)")
         print("roll value\(self.roll)")
         print("yaw value\(self.yaw)")
@@ -998,22 +969,19 @@ class StudyViewController: UIViewController,BluetoothManagerDelegate,DJISDKManag
         print("left circle command")
         let desiredSpeed = sensorValue
         
-        let timeToCompleteCircle = 2.0 * Float.pi * (4.0 / 2.0) / desiredSpeed
+        let timeToCompleteCircle = 2 * Float.pi * currentDistance / desiredSpeed
         //let timeToCompleteCircle = 2 * Float.pi * 3 / desiredSpeed
-        let yawSpeed = 360 / timeToCompleteCircle
+        let yawSpeed = 360 * 0.5 / timeToCompleteCircle
         
         // rollValueはドローンの実際の速度に影響するので、これはドローンの具体的な性能に応じて調整する必要があります。
         // ここでは、desiredSpeedの10%としていますが、これは仮定されています。
-        let rollValue: Float = desiredSpeed * currentDistance / 2.0
+        let rollValue: Float = desiredSpeed / 10.0
         self.pitch = 0.0
-        self.roll = rollValue * 0.5 * 0.3
-        self.throttle = 0.0
-        self.yaw = -yawSpeed * 0.5 * 0.30 //ここ
+        self.roll = rollValue
+        self.yaw = -yawSpeed * 0.5 * 0.7
         print("pitch value\(self.pitch)")
         print("roll value\(self.roll)")
         print("yaw value\(self.yaw)")
-        sendControlData(x: 0, y: 0, z: 0, ya: 0)//要確認
-        
         //比較実験用
         /*
         self.pitch = 0.0
@@ -1021,8 +989,8 @@ class StudyViewController: UIViewController,BluetoothManagerDelegate,DJISDKManag
         print("pitch value\(self.pitch)")
         print("roll value\(self.roll)")
         self.sendControlData(x: 0, y: 0, z: 0, ya: 0)
-        //self.sendControlData(x: rollValue, y: 0, z: 0, ya: yawSpeed)
-        */
+         */
+        self.sendControlData(x: rollValue, y: 0, z: 0, ya: yawSpeed)
         
     }
     
@@ -1086,3 +1054,4 @@ class StudyViewController: UIViewController,BluetoothManagerDelegate,DJISDKManag
 }
 
 
+      */*/*/*/
